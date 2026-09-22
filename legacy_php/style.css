@@ -1,0 +1,394 @@
+/* === RESET & GLOBAL === */
+@media screen {
+  html {
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+  }
+}
+
+body {
+  font-family: 'Segoe UI', sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f4f6f8;
+  color: #333;
+}
+
+/* CSS Variables for colors */
+:root {
+  --primary-blue: #0066cc;
+  --primary-blue-dark: #004f99;
+  --header-bg: #afeae8;
+  --header-text: #8b8b51;
+  --post-bg: #1d1a1a;
+  --post-text: #121111;
+  --delete-red: #e74c3c;
+  --delete-red-dark: #c0392b;
+}
+
+a {
+  text-decoration: none;
+  color: var(--primary-blue);
+  transition: color 0.2s;
+}
+
+a:hover {
+  color: #25027d;
+}
+.site-wrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex: 1; /* Pushes footer to the bottom */
+}
+
+/* === HEADER === */
+header {
+  background-color: var(--header-bg);
+  padding: 20px 0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 999;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+
+header h1 {
+  margin: 0;
+  font-size: 2rem;
+  color: var(--header-text);
+}
+
+nav {
+  margin-top: 10px;
+ display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.2rem;
+}
+
+nav a {
+  margin: 0 12px;
+  font-weight: bold;
+  color: #333;
+  text-decoration: none;
+  padding: 8px 12px;
+}
+
+nav a:hover {
+  text-decoration: underline;
+  color: #dcdbde;
+}
+
+/* === MAIN AREA === */
+main {
+  padding: 30px 20px;
+  max-width: 900px;
+  margin: auto;
+  padding-top: 100px; /* Adjusted for fixed header */
+}
+
+h2 {
+  color: #2c3e50;
+  margin-top: 40px;
+  border-bottom: 2px solid #ddd;
+  padding-bottom: 8px;
+  text-align: center;
+  font-size: 1.8rem;
+}
+
+/* === POST PREVIEW === */
+.post-preview {
+  background-color:#afeae8;
+  border: 1px solid #ddd;
+  padding: 20px;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+  transition: box-shadow 0.2s ease;
+  color: var(--post-text); 
+}
+
+.post-preview:hover {
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+
+.post-preview h3 {
+  margin: 0 0 10px;
+  color: var(--post-text); /* Improved contrast */
+}
+.read-more-btn {
+  display: inline-block;
+  padding: 6px 12px;
+  background: #3498db;
+  color: white;
+  text-decoration: none;
+  border-radius: 4px;
+}
+.read-more-btn:hover {
+  background: #2980b9;
+}
+
+
+/* === FORMS === */
+form {
+  font-size: 1.1rem;
+  background-color:#afeae8;
+  padding: 25px;
+  border-radius: 10px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
+  max-width: 500px;
+  margin: 30px auto;
+}
+
+form label {
+  display:block;
+  margin: 15px 0 5px;
+  font-weight: bold;
+}
+
+form input[type="text"],
+form input[type="email"],
+form input[type="password"],
+form textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease;
+  
+}
+
+form button {
+  margin-top: 15px;
+  width: 100%;
+  padding: 12px 0;
+  background: linear-gradient(90deg, #0779f4 0%, #a9bcce 100%);
+  border: none;
+  color: #222;
+  border-radius: 8px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  box-shadow: 0 2px 8px rgba(7, 121, 244, 0.08);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+
+form button:hover {
+  background: linear-gradient(90deg, #005bb5 0%, #0779f4 100%);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(7, 121, 244, 0.15);
+}
+
+/* === COMMENTS === */
+.comment {
+  background-color: #fafafa;
+  border-left: 3px solid #ccc;
+  padding: 10px 15px;
+  margin-bottom: 12px;
+  border-radius: 6px;
+}
+
+/* === DASHBOARD / LIST STYLES === */
+ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+li {
+  background-color: #ffffff;
+  border: 1px solid #ddd;
+  padding: 20px;
+  margin-bottom: 15px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+  transition: box-shadow 0.2s ease-in-out;
+}
+
+li:hover {
+  box-shadow: 0 6px 12px rgba(0,0,0,0.08);
+}
+
+li strong {
+  font-size: 1.1rem;
+  color: #333;
+}
+
+li small {
+  display: block;
+  margin-top: 5px;
+  color: #777;
+  font-size: 0.85rem;
+}
+
+li p {
+  margin: 10px 0 5px;
+  line-height: 1.6;
+}
+
+/* Delete icons/links */
+.delete {
+  color: var(--delete-red);
+  font-weight: bold;
+  margin-left: 15px;
+}
+
+.delete:hover {
+  color: var(--delete-red-dark);
+  text-decoration: underline;
+}
+
+/* === FOOTER === */
+footer {
+  margin-top: 60px;
+  text-align: center;
+  font-size: 0.9rem;
+  color: #fff;
+  padding: 20px 0;
+  background-color: #1d1a1a;
+  border-top: 1px solid #ddd;
+  width: 100%;
+  clear: both;
+  border-radius: 5px;
+}
+
+/* === logout === */
+.message-box {
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+        .success {
+            color: #155724;
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            color: #721c24;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+        }
+        
+/* === MOBILE NAV FIX (no overlapping) === */
+nav {
+  flex-wrap: wrap;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  nav {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  nav a {
+    margin: 6px 0;
+    padding: 10px;
+    border-radius: 5px;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    width: 90%;
+    max-width: 300px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .post-preview h3,
+  .post-preview p,
+  .post-preview small {
+    text-align: center;
+  }
+
+  header {
+    padding: 15px 10px;
+  }
+}
+
+/* === EXCESS TEXT WRAPPING FIX === */
+.post-preview p,
+.post-preview h3,
+.post-preview small {
+  word-wrap: break-word;
+  word-break: break-word;
+}
+
+/* === RESPONSIVE DESIGN === */
+@media (max-width: 768px) {
+  body {
+    padding: 15px;
+    padding-top: 100px; 
+  }
+
+  header h1 {
+    font-size: 1.5rem;
+  }
+
+  nav a {
+    display: block;
+    margin: 10px 0;
+  }
+
+  main {
+    padding: 20px 10px;
+  }
+
+  .post-preview {
+    padding: 15px;
+  }
+
+  form {
+    padding: 20px;
+  }
+
+  form input,
+  form textarea,
+  form button {
+    font-size: 1rem;
+  }
+
+  ul li {
+    padding: 15px;
+    font-size: 0.95rem;
+  }
+
+  footer {
+    padding: 15px 10px;
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  header h1 {
+    font-size: 1.3rem;
+  }
+
+  nav {
+    font-size: 0.95rem;
+  }
+
+  nav a {
+    padding: 8px 0;
+  }
+
+  .post-preview h3 {
+    font-size: 1rem;
+  }
+
+  form button {
+    width: 100%;
+  }
+
+  li {
+    font-size: 0.9rem;
+  }
+}
