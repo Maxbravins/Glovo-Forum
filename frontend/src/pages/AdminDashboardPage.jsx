@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { fetchAdminStats, fetchUsers, deleteUserApi, api } from '../services/api';
 import { ShieldAlert, Users, MessageSquare, FileText, Bike, Trash2, ArrowLeft } from 'lucide-react';
+import {
+  fetchAdminStats,
+  fetchUsers,
+  deleteUserApi,
+  updateUserRoleApi,
+} from '../services/api';
 
 export const AdminDashboardPage = ({ onBack }) => {
   const [stats, setStats] = useState(null);
@@ -39,7 +44,7 @@ export const AdminDashboardPage = ({ onBack }) => {
 
   const handleRoleChange = async (id, newRole) => {
     try {
-      await api.patch(`/admin/users/${id}/role`, { role: newRole });
+      await updateUserRoleApi(id, newRole);
       loadData();
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to update user role');

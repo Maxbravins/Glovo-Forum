@@ -42,5 +42,5 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 Glovo Forum API Backend running on http://localhost:${PORT}`);
+  console.log(` Glovo Forum API Backend running on http://localhost:${PORT}`);
 });

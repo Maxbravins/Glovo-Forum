@@ -1,6 +1,13 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Search, PlusCircle, LogOut, User as UserIcon, ShieldAlert, Bike } from 'lucide-react';
+import {
+  Search,
+  PlusCircle,
+  LogOut,
+  User as UserIcon,
+  ShieldAlert,
+  Bike,
+} from 'lucide-react';
 
 export const Navbar = ({
   onSearch,
@@ -19,20 +26,41 @@ export const Navbar = ({
   };
 
   return (
-    <header className="navbar">
-      <div className="container navbar-inner">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-          <button type="button" onClick={onNavigateHome} className="brand-logo">
-            <span style={{ color: 'var(--color-brand-yellow)', display: 'flex', alignItems: 'center' }}>
-              <Bike size={28} />
-            </span>
-            <span>Glovo <span style={{ color: 'var(--color-brand-yellow)' }}>Forum</span></span>
-            <span className="brand-badge">Community</span>
-          </button>
-        </div>
+    <header className="sticky top-0 z-50 border-b border-white/10 bg-[#181b20]/90 backdrop-blur-xl">
+      <div className="mx-auto flex max-w-[1200px] items-center gap-4 px-4 py-3">
 
-        <form onSubmit={handleSearchSubmit} style={{ flex: '1', maxWidth: '440px', position: 'relative' }}>
-          <Search size={18} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+        {/* Brand */}
+        <button
+          type="button"
+          onClick={onNavigateHome}
+          className="flex shrink-0 items-center gap-2.5 font-extrabold tracking-tight transition-opacity hover:opacity-90"
+        >
+          <span className="flex items-center text-[#ffc244]">
+            <Bike size={28} strokeWidth={2.5} />
+          </span>
+
+          <span className="text-[1.25rem] text-white sm:text-[1.35rem]">
+            Glovo{' '}
+            <span className="text-[#ffc244]">
+              Forum
+            </span>
+          </span>
+
+          <span className="hidden rounded-full bg-[#ffc244] px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide text-[#0f1115] sm:inline-flex">
+            Community
+          </span>
+        </button>
+
+        {/* Search */}
+        <form
+          onSubmit={handleSearchSubmit}
+          className="relative mx-auto hidden w-full max-w-[440px] md:block"
+        >
+          <Search
+            size={18}
+            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+          />
+
           <input
             type="text"
             value={searchQuery}
@@ -41,92 +69,138 @@ export const Navbar = ({
               onSearch(e.target.value);
             }}
             placeholder="Search posts, rider tips, app issues..."
-            style={{ width: '100%', paddingLeft: '40px', height: '40px' }}
+            className="h-10 w-full rounded-xl border border-[#2e3440] bg-[#242932] py-2 pl-10 pr-4 text-sm text-gray-100 placeholder:text-gray-500 transition-colors focus:border-[#ffc244] focus:outline-none"
           />
         </form>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        {/* Actions */}
+        <div className="ml-auto flex shrink-0 items-center gap-2">
           {user ? (
             <>
+              {/* New Post */}
               <button
                 type="button"
-                className="btn btn-primary"
                 onClick={onOpenCreateModal}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#ffc244] px-3.5 py-2 text-sm font-bold text-[#0f1115] transition-all hover:-translate-y-0.5 hover:bg-[#eab233]"
               >
                 <PlusCircle size={18} />
-                <span>New Post</span>
+                <span className="hidden sm:inline">New Post</span>
               </button>
 
+              {/* Admin */}
               {user.role === 'ADMIN' && (
                 <button
                   type="button"
-                  className={`btn ${currentView === 'admin' ? 'btn-primary' : 'btn-secondary'}`}
                   onClick={onNavigateAdmin}
                   title="Admin Dashboard"
+                  className={`inline-flex items-center justify-center gap-2 rounded-xl border px-3.5 py-2 text-sm font-semibold transition-colors ${
+                    currentView === 'admin'
+                      ? 'border-[#ffc244] bg-[#ffc244] text-[#0f1115]'
+                      : 'border-[#2e3440] bg-[#2d3340] text-gray-100 hover:bg-[#20242b]'
+                  }`}
                 >
-                  <ShieldAlert size={18} style={{ color: 'var(--color-brand-red)' }} />
-                  <span>Admin</span>
+                  <ShieldAlert
+                    size={18}
+                    className={
+                      currentView === 'admin'
+                        ? 'text-[#0f1115]'
+                        : 'text-[#ff5a5f]'
+                    }
+                  />
+                  <span className="hidden sm:inline">Admin</span>
                 </button>
               )}
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingLeft: '8px', borderLeft: '1px solid var(--border-color)' }}>
+              {/* User */}
+              <div className="ml-1 flex items-center gap-2 border-l border-[#2e3440] pl-3">
                 <div
-                  style={{
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '50%',
-                    background: 'var(--bg-badge)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    overflow: 'hidden',
-                  }}
+                  className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#2d3340]"
                   title={`${user.username} (${user.role})`}
                 >
                   {user.avatar ? (
-                    <img src={user.avatar} alt={user.username} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <img
+                      src={user.avatar}
+                      alt={user.username}
+                      className="h-full w-full object-cover"
+                    />
                   ) : (
-                    <UserIcon size={20} style={{ color: 'var(--text-main)' }} />
+                    <UserIcon size={20} className="text-gray-200" />
                   )}
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 700, lineHeight: 1.2 }}>{user.username}</span>
-                  <span className={`role-badge ${user.role.toLowerCase()}`} style={{ fontSize: '0.65rem', padding: '1px 5px' }}>
+                <div className="hidden min-w-0 flex-col items-start sm:flex">
+                  <span className="max-w-[120px] truncate text-[0.85rem] font-bold leading-tight text-white">
+                    {user.username}
+                  </span>
+
+                  <span
+                    className={`mt-0.5 rounded-full px-1.5 py-0.5 text-[0.65rem] font-bold leading-none ${
+                      user.role === 'ADMIN'
+                        ? 'border border-[#ff5a5f]/30 bg-[#ff5a5f]/15 text-[#ff5a5f]'
+                        : user.role === 'RIDER'
+                          ? 'border border-[#00a082]/30 bg-[#00a082]/15 text-[#00a082]'
+                          : 'bg-white/10 text-gray-400'
+                    }`}
+                  >
                     {user.role}
                   </span>
                 </div>
 
+                {/* Logout */}
                 <button
                   type="button"
                   onClick={logout}
-                  className="btn btn-secondary btn-sm"
-                  style={{ marginLeft: '6px', padding: '6px' }}
                   title="Log out"
+                  className="ml-1 inline-flex h-8 w-8 items-center justify-center rounded-lg border border-[#2e3440] bg-[#2d3340] text-gray-300 transition-colors hover:bg-[#20242b] hover:text-white"
                 >
                   <LogOut size={16} />
                 </button>
               </div>
             </>
           ) : (
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div className="flex items-center gap-2">
               <button
                 type="button"
-                className="btn btn-secondary"
                 onClick={() => onNavigateAuth('login')}
+                className="inline-flex items-center justify-center rounded-xl border border-[#2e3440] bg-[#2d3340] px-3.5 py-2 text-sm font-semibold text-gray-100 transition-colors hover:bg-[#20242b]"
               >
                 Log In
               </button>
+
               <button
                 type="button"
-                className="btn btn-primary"
                 onClick={() => onNavigateAuth('register')}
+                className="inline-flex items-center justify-center rounded-xl bg-[#ffc244] px-3.5 py-2 text-sm font-bold text-[#0f1115] transition-all hover:-translate-y-0.5 hover:bg-[#eab233]"
               >
                 Register
               </button>
             </div>
           )}
         </div>
+      </div>
+
+      {/* Mobile Search */}
+      <div className="border-t border-white/5 px-4 py-2.5 md:hidden">
+        <form
+          onSubmit={handleSearchSubmit}
+          className="relative mx-auto w-full max-w-[1200px]"
+        >
+          <Search
+            size={17}
+            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+          />
+
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              onSearch(e.target.value);
+            }}
+            placeholder="Search discussions..."
+            className="h-10 w-full rounded-xl border border-[#2e3440] bg-[#242932] py-2 pl-10 pr-4 text-sm text-gray-100 placeholder:text-gray-500 focus:border-[#ffc244] focus:outline-none"
+          />
+        </form>
       </div>
     </header>
   );

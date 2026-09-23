@@ -8,18 +8,38 @@ datasource db {
 }
 
 model User {
-  id        Int       @id @default(autoincrement())
-  username  String    @unique
-  email     String    @unique
-  password  String
-  role      String    @default("USER") // USER, RIDER, ADMIN
-  avatar    String?   // User avatar image path
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id          Int      @id @default(autoincrement())
+  username    String   @unique
+  email       String   @unique
+  password    String
 
-  posts     Post[]
-  comments  Comment[]
-  likes     Like[]
+  // USER, RIDER, RESTAURANT, STORE, ADMIN, MODERATOR
+  role        String   @default("USER")
+
+  // ACTIVE, SUSPENDED, BANNED
+  status      String   @default("ACTIVE")
+
+  avatar      String?
+  bio         String?
+  phone       String?
+  location    String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  lastSeenAt  DateTime?
+
+  posts       Post[]
+  comments    Comment[]
+  likes       Like[]
+  bookmarks   Bookmark[]
+  follows     PostFollow[]
+  reports     Report[]
+
+  notifications       Notification[] @relation("NotificationRecipient")
+  sentNotifications   Notification[] @relation("NotificationSender")
+
+  @@index([role])
+  @@index([status])
 }
 
 model Category {
@@ -27,59 +47,209 @@ model Category {
   name        String   @unique
   slug        String   @unique
   description String?
-  icon        String?  // Icon name or emoji
+  icon        String?
+  color       String?
+
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   posts       Post[]
 }
 
 model Post {
-  id          Int       @id @default(autoincrement())
+  id          Int      @id @default(autoincrement())
+
   title       String
   content     String
-  image       String?   // Attached photo path
-  views       Int       @default(0)
-  pinned      Boolean   @default(false)
+  image       String?
+
+  // ACTIVE, HIDDEN, DELETED, FLAGGED
+  status      String   @default("ACTIVE")
+
+  views       Int      @default(0)
+  pinned      Boolean  @default(false)
+  locked      Boolean  @default(false)
+  solved      Boolean  @default(false)
+
   categoryId  Int
   userId      Int
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
 
-  category    Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   comments    Comment[]
   likes       Like[]
+  bookmarks   Bookmark[]
+  follows     PostFollow[]
+  reports     Report[]
+  tags        PostTag[]
+
+  @@index([categoryId])
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([views])
+  @@index([pinned])
+  @@index([solved])
+}
+
+model Tag {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  slug        String   @unique
+
+  createdAt   DateTime @default(now())
+
+  posts       PostTag[]
+}
+
+model PostTag {
+  postId      Int
+  tagId       Int
+
+  post        Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag         Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([postId, tagId])
 }
 
 model Comment {
-  id        Int       @id @default(autoincrement())
-  content   String
-  image     String?   // Attached photo for comment/reply
-  postId    Int
-  userId    Int
-  parentId  Int?      // Self-referential ID for nested replies
+  id          Int      @id @default(autoincrement())
 
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  content     String
+  image       String?
 
-  post      Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
-  replies   Comment[] @relation("CommentReplies")
-  likes     Like[]
+  // ACTIVE, HIDDEN, DELETED, FLAGGED
+  status      String   @default("ACTIVE")
+
+  postId      Int
+  userId      Int
+  parentId    Int?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+
+  post        Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  parent      Comment? @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies     Comment[] @relation("CommentReplies")
+
+  likes       Like[]
+  reports     Report[]
+
+  @@index([postId])
+  @@index([userId])
+  @@index([parentId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model Like {
-  id        Int      @id @default(autoincrement())
-  userId    Int
-  postId    Int?
-  commentId Int?
-  createdAt DateTime @default(now())
+  id          Int      @id @default(autoincrement())
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  post      Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
-  comment   Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  userId      Int
+  postId      Int?
+  commentId   Int?
+
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post        Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  comment     Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
 
   @@unique([userId, postId])
   @@unique([userId, commentId])
+
+  @@index([postId])
+  @@index([commentId])
+}
+
+model Bookmark {
+  id          Int      @id @default(autoincrement())
+
+  userId      Int
+  postId      Int
+
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post        Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+  @@index([postId])
+}
+
+model PostFollow {
+  id          Int      @id @default(autoincrement())
+
+  userId      Int
+  postId      Int
+
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post        Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+  @@index([postId])
+}
+
+model Report {
+  id          Int      @id @default(autoincrement())
+
+  // SPAM, HARASSMENT, ABUSE, MISINFORMATION, FRAUD, INAPPROPRIATE, OTHER
+  reason      String
+
+  description String?
+
+  // PENDING, REVIEWED, RESOLVED, DISMISSED
+  status      String   @default("PENDING")
+
+  userId      Int
+  postId      Int?
+  commentId   Int?
+
+  reviewedBy  Int?
+  reviewedAt  DateTime?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post        Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  comment     Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([postId])
+  @@index([commentId])
+}
+
+model Notification {
+  id          Int      @id @default(autoincrement())
+
+  // COMMENT, REPLY, LIKE, MENTION, POST_STATUS, MODERATION, FOLLOW, SYSTEM
+  type        String
+
+  title       String
+  message     String
+  read        Boolean  @default(false)
+
+  recipientId Int
+  senderId    Int?
+  postId      Int?
+
+  createdAt   DateTime @default(now())
+
+  recipient   User     @relation("NotificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  sender      User?    @relation("NotificationSender", fields: [senderId], references: [id], onDelete: SetNull)
+
+  @@index([recipientId])
+  @@index([read])
+  @@index([createdAt])
 }

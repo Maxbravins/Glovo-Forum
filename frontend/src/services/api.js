@@ -79,3 +79,8 @@ export const fetchUsers = async () => {
 export const deleteUserApi = async (id) => {
   await api.delete(`/admin/users/${id}`);
 };
+
+export const updateUserRoleApi = async (id, role) => {
+  const res = await api.patch(`/admin/users/${id}/role`, { role });
+  return res.data;
+};

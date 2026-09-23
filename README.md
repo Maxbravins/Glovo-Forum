@@ -1,4 +1,4 @@
-# Glovo Forum - Rider & Customer Community Platform 🛵
+# Glovo Forum - Rider & Customer Community Platform 
 
 A modern, full-stack forum web application built with **Node.js (Express + JavaScript + Prisma ORM)** backend and **React (Vite + JavaScript + CSS Design System)** frontend. 
 
@@ -6,7 +6,7 @@ Designed specifically for Glovo riders and customers to discuss delivery experie
 
 ---
 
-## 🌟 Features
+##  Features
 
 - **Nested Replies (Threaded Comments)**: Reply directly to any comment with unlimited nesting depth, visual line connectors, and inline reply forms.
 - **Photo Uploads**: Attach photos to posts, comment replies, and user profiles (powered by Multer).
@@ -17,7 +17,7 @@ Designed specifically for Glovo riders and customers to discuss delivery experie
 
 ---
 
-## 📁 Directory Structure
+##  Directory Structure
 
 ```
 Glovo_Forum/
@@ -39,7 +39,7 @@ Glovo_Forum/
 
 ---
 
-## 🚀 Quick Start Guide
+##  Quick Start Guide
 
 ### 1. Start Backend API Server
 ```bash
@@ -59,7 +59,7 @@ npm run dev                  # Starts React app on http://localhost:5173
 
 ---
 
-## 🔑 Demo Login Accounts
+##  Demo Login Accounts
 
 Password for all demo accounts is **`password123`**:
 
