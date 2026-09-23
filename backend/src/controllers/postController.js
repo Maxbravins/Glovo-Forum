@@ -23,27 +23,26 @@ const getPosts = async (req, res) => {
       orderBy = [{ views: 'desc' }, { createdAt: 'desc' }];
     }
 
-    const posts = await prisma.post.findMany({
-      where,
-      orderBy,
-      include: {
-        category: true,
-        user: {
-          select: {
-            id: true,
-            username: true,
-            role: true,
-            avatar: true,
-          },
+    const post = await prisma.post.create({
+        data: {
+          title,
+          content,
+          categoryId: Number(categoryId),
+          userId: req.user.id,
+          type: type || "DISCUSSION",
         },
-        _count: {
-          select: {
-            comments: true,
-            likes: true,
+        include: {
+          user: {
+            select: {
+              id: true,
+              username: true,
+              avatar: true,
+              role: true,
+            },
           },
+          category: true,
         },
-      },
-    });
+      });
 
     const currentUserId = req.user?.id;
 

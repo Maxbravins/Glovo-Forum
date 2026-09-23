@@ -24,22 +24,40 @@ model User {
   phone       String?
   location    String?
 
+  reputation  Int      @default(0)
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   lastSeenAt  DateTime?
 
   posts       Post[]
   comments    Comment[]
+
   likes       Like[]
+  reactions   Reaction[]
+
   bookmarks   Bookmark[]
   follows     PostFollow[]
+
+  following   UserFollow[] @relation("UserFollowing")
+  followers   UserFollow[] @relation("UserFollowers")
+
   reports     Report[]
 
-  notifications       Notification[] @relation("NotificationRecipient")
-  sentNotifications   Notification[] @relation("NotificationSender")
+  badges      UserBadge[]
+
+  notifications     Notification[] @relation("NotificationRecipient")
+  sentNotifications Notification[] @relation("NotificationSender")
+
+  mentionsSent     Mention[] @relation("MentionSender")
+  mentionsReceived Mention[] @relation("MentionRecipient")
+
+  moderationActions ModerationAction[] @relation("ModeratorActions")
 
   @@index([role])
   @@index([status])
+  @@index([reputation])
+  @@index([createdAt])
 }
 
 model Category {
@@ -50,47 +68,65 @@ model Category {
   icon        String?
   color       String?
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  posts       Post[]
+  posts Post[]
 }
 
 model Post {
-  id          Int      @id @default(autoincrement())
+  id      Int    @id @default(autoincrement())
+  title   String
+  content String
 
-  title       String
-  content     String
-  image       String?
+  image String?
+
+  // DISCUSSION, QUESTION, TIP, EXPERIENCE, PROBLEM, IDEA, ANNOUNCEMENT
+  type String @default("DISCUSSION")
 
   // ACTIVE, HIDDEN, DELETED, FLAGGED
-  status      String   @default("ACTIVE")
+  status String @default("ACTIVE")
 
-  views       Int      @default(0)
-  pinned      Boolean  @default(false)
-  locked      Boolean  @default(false)
-  solved      Boolean  @default(false)
+  views   Int @default(0)
+  pinned Boolean @default(false)
+  locked Boolean @default(false)
+  solved Boolean @default(false)
 
-  categoryId  Int
-  userId      Int
+  categoryId Int
+  userId     Int
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  deletedAt   DateTime?
+  acceptedAnswerId Int? @unique
 
-  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
-  comments    Comment[]
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  comments Comment[]
+
+  acceptedAnswer Comment? @relation(
+    "AcceptedAnswer",
+    fields: [acceptedAnswerId],
+    references: [id],
+    onDelete: SetNull
+  )
+
   likes       Like[]
+  reactions   Reaction[]
   bookmarks   Bookmark[]
   follows     PostFollow[]
   reports     Report[]
   tags        PostTag[]
+  attachments Attachment[]
+
+  mentions Mention[]
 
   @@index([categoryId])
   @@index([userId])
   @@index([status])
+  @@index([type])
   @@index([createdAt])
   @@index([views])
   @@index([pinned])
@@ -98,50 +134,54 @@ model Post {
 }
 
 model Tag {
-  id          Int      @id @default(autoincrement())
-  name        String   @unique
-  slug        String   @unique
+  id   Int    @id @default(autoincrement())
+  name String @unique
+  slug String @unique
 
-  createdAt   DateTime @default(now())
+  createdAt DateTime @default(now())
 
-  posts       PostTag[]
+  posts PostTag[]
 }
 
 model PostTag {
-  postId      Int
-  tagId       Int
+  postId Int
+  tagId  Int
 
-  post        Post @relation(fields: [postId], references: [id], onDelete: Cascade)
-  tag         Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@id([postId, tagId])
 }
 
 model Comment {
-  id          Int      @id @default(autoincrement())
-
-  content     String
-  image       String?
+  id      Int    @id @default(autoincrement())
+  content String
+  image   String?
 
   // ACTIVE, HIDDEN, DELETED, FLAGGED
-  status      String   @default("ACTIVE")
+  status String @default("ACTIVE")
 
-  postId      Int
-  userId      Int
-  parentId    Int?
+  postId   Int
+  userId   Int
+  parentId Int?
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  deletedAt   DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
-  post        Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  parent      Comment? @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
-  replies     Comment[] @relation("CommentReplies")
+  parent  Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies Comment[] @relation("CommentReplies")
 
-  likes       Like[]
-  reports     Report[]
+  acceptedFor Post? @relation("AcceptedAnswer")
+
+  likes     Like[]
+  reactions Reaction[]
+  reports   Report[]
+
+  mentions Mention[]
 
   @@index([postId])
   @@index([userId])
@@ -151,17 +191,17 @@ model Comment {
 }
 
 model Like {
-  id          Int      @id @default(autoincrement())
+  id Int @id @default(autoincrement())
 
-  userId      Int
-  postId      Int?
-  commentId   Int?
+  userId    Int
+  postId    Int?
+  commentId Int?
 
-  createdAt   DateTime @default(now())
+  createdAt DateTime @default(now())
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  post        Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
-  comment     Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post    Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  comment Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
 
   @@unique([userId, postId])
   @@unique([userId, commentId])
@@ -170,86 +210,257 @@ model Like {
   @@index([commentId])
 }
 
+model Reaction {
+  id Int @id @default(autoincrement())
+
+  // LIKE, LOVE, HELPFUL, FUNNY
+  type String @default("LIKE")
+
+  userId    Int
+  postId    Int?
+  commentId Int?
+
+  createdAt DateTime @default(now())
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post    Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  comment Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId, type])
+  @@unique([userId, commentId, type])
+
+  @@index([postId])
+  @@index([commentId])
+  @@index([type])
+}
+
 model Bookmark {
-  id          Int      @id @default(autoincrement())
+  id Int @id @default(autoincrement())
 
-  userId      Int
-  postId      Int
+  userId Int
+  postId Int
 
-  createdAt   DateTime @default(now())
+  createdAt DateTime @default(now())
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  post        Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
 
   @@unique([userId, postId])
   @@index([postId])
 }
 
 model PostFollow {
-  id          Int      @id @default(autoincrement())
+  id Int @id @default(autoincrement())
 
-  userId      Int
-  postId      Int
+  userId Int
+  postId Int
 
-  createdAt   DateTime @default(now())
+  createdAt DateTime @default(now())
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  post        Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
 
   @@unique([userId, postId])
   @@index([postId])
 }
 
+model UserFollow {
+  id Int @id @default(autoincrement())
+
+  followerId  Int
+  followingId Int
+
+  createdAt DateTime @default(now())
+
+  follower User @relation(
+    "UserFollowing",
+    fields: [followerId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  following User @relation(
+    "UserFollowers",
+    fields: [followingId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  @@unique([followerId, followingId])
+  @@index([followingId])
+}
+
 model Report {
-  id          Int      @id @default(autoincrement())
+  id Int @id @default(autoincrement())
 
   // SPAM, HARASSMENT, ABUSE, MISINFORMATION, FRAUD, INAPPROPRIATE, OTHER
-  reason      String
+  reason String
 
   description String?
 
   // PENDING, REVIEWED, RESOLVED, DISMISSED
-  status      String   @default("PENDING")
+  status String @default("PENDING")
 
-  userId      Int
-  postId      Int?
-  commentId   Int?
+  userId    Int
+  postId    Int?
+  commentId Int?
 
-  reviewedBy  Int?
-  reviewedAt  DateTime?
+  reviewedBy Int?
+  reviewedAt DateTime?
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  post        Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
-  comment     Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post    Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  comment Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
 
   @@index([status])
   @@index([postId])
   @@index([commentId])
+  @@index([createdAt])
 }
 
 model Notification {
-  id          Int      @id @default(autoincrement())
+  id Int @id @default(autoincrement())
 
-  // COMMENT, REPLY, LIKE, MENTION, POST_STATUS, MODERATION, FOLLOW, SYSTEM
-  type        String
+  // COMMENT, REPLY, LIKE, REACTION, MENTION, POST_STATUS, MODERATION, FOLLOW, ACCEPTED_ANSWER, SYSTEM
+  type String
 
-  title       String
-  message     String
-  read        Boolean  @default(false)
+  title   String
+  message String
+
+  read Boolean @default(false)
 
   recipientId Int
   senderId    Int?
-  postId      Int?
 
-  createdAt   DateTime @default(now())
+  postId    Int?
+  commentId Int?
 
-  recipient   User     @relation("NotificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
-  sender      User?    @relation("NotificationSender", fields: [senderId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now())
+
+  recipient User @relation(
+    "NotificationRecipient",
+    fields: [recipientId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  sender User? @relation(
+    "NotificationSender",
+    fields: [senderId],
+    references: [id],
+    onDelete: SetNull
+  )
 
   @@index([recipientId])
   @@index([read])
+  @@index([createdAt])
+}
+
+model Mention {
+  id Int @id @default(autoincrement())
+
+  senderId    Int
+  recipientId Int
+
+  postId    Int?
+  commentId Int?
+
+  createdAt DateTime @default(now())
+
+  sender User @relation(
+    "MentionSender",
+    fields: [senderId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  recipient User @relation(
+    "MentionRecipient",
+    fields: [recipientId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  post Post? @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  comment Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@index([recipientId])
+  @@index([postId])
+  @@index([commentId])
+}
+
+model Attachment {
+  id Int @id @default(autoincrement())
+
+  postId Int
+
+  url      String
+  filename String?
+  mimeType String?
+  size     Int?
+
+  createdAt DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+}
+
+model Badge {
+  id Int @id @default(autoincrement())
+
+  name        String  @unique
+  description String?
+  icon        String?
+  color       String?
+
+  createdAt DateTime @default(now())
+
+  users UserBadge[]
+}
+
+model UserBadge {
+  id Int @id @default(autoincrement())
+
+  userId  Int
+  badgeId Int
+
+  awardedAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge Badge @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeId])
+}
+
+model ModerationAction {
+  id Int @id @default(autoincrement())
+
+  moderatorId Int
+  targetUserId Int?
+
+  postId    Int?
+  commentId Int?
+
+  // WARN, MUTE, SUSPEND, BAN, REMOVE, RESTORE, LOCK
+  action String
+
+  reason String?
+
+  createdAt DateTime @default(now())
+
+  moderator User @relation(
+    "ModeratorActions",
+    fields: [moderatorId],
+    references: [id],
+    onDelete: Cascade
+  )
+
+  @@index([moderatorId])
+  @@index([targetUserId])
   @@index([createdAt])
 }

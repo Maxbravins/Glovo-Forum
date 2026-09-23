@@ -9,6 +9,10 @@ const commentRoutes = require('./routes/commentRoutes');
 const likeRoutes = require('./routes/likeRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const reactionRoutes = require("./routes/reactionRoutes");
+const followRoutes = require("./routes/followRoutes");
+const answerRoutes = require("./routes/answerRoutes");
+
 
 dotenv.config();
 
@@ -31,6 +35,10 @@ app.use('/api/comments', commentRoutes);
 app.use('/api/likes', likeRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/admin', adminRoutes);
+app.use("/api/reactions", reactionRoutes);
+app.use("/api/follows", followRoutes);
+app.use("/api/answers", answerRoutes);
+
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Glovo Forum API Backend is running' });
