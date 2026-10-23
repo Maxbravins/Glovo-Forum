@@ -3,7 +3,7 @@ import {
   ImagePlus,
   Send,
   X,
-  FileText,
+  FileText,c
 } from "lucide-react";
 
 import PostTypeSelector from "./PostTypeSelector";

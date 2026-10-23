@@ -21,7 +21,7 @@ const register = async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const userRole = role === 'RIDER' ? 'RIDER' : 'USER';
+    const userRole = ['RIDER', 'STORE'].includes(role) ? role : 'USER';
 
     const user = await prisma.user.create({
       data: {

@@ -116,6 +116,14 @@ export const RegisterPage = ({ onSuccess, onSwitchToLogin }) => {
               >
                 🛵 Glovo Rider
               </button>
+              <button
+                type="button"
+                className={`btn ${role === 'STORE' ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => setRole('STORE')}
+                style={{ padding: '10px', gridColumn: '1 / -1' }}
+              >
+                🏪 Store / Merchant
+              </button>
             </div>
           </div>
 

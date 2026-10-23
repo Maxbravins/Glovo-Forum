@@ -43,6 +43,8 @@ const requireAdmin = (req, res, next) => {
 
 module.exports = {
   authenticateToken,
+  // Keep the short alias used by the community interaction routes.
+  authenticate: authenticateToken,
   optionalAuth,
   requireAdmin,
 };

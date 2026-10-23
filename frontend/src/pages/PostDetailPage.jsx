@@ -182,7 +182,7 @@ export const PostDetailPage = ({ postId, onBack }) => {
             </div>
 
             <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>{post.author.username}</span>
-            <span className={`role-badge ${post.author.role.toLowerCase()}`}>{post.author.role}</span>
+            <span className={`role-badge ${post.author.role.toLowerCase()}`}>{post.author.role === 'USER' ? 'CUSTOMER' : post.author.role}</span>
           </div>
         </div>
 

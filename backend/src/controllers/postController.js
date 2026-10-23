@@ -23,48 +23,29 @@ const getPosts = async (req, res) => {
       orderBy = [{ views: 'desc' }, { createdAt: 'desc' }];
     }
 
-    const post = await prisma.post.create({
-        data: {
-          title,
-          content,
-          categoryId: Number(categoryId),
-          userId: req.user.id,
-          type: type || "DISCUSSION",
-        },
-        include: {
-          user: {
-            select: {
-              id: true,
-              username: true,
-              avatar: true,
-              role: true,
-            },
-          },
-          category: true,
-        },
-      });
-
+    const posts = await prisma.post.findMany({
+      where: { ...where, status: 'ACTIVE' },
+      orderBy,
+      include: {
+        category: true,
+        user: { select: { id: true, username: true, avatar: true, role: true } },
+        _count: { select: { comments: true, likes: true, reactions: true } },
+      },
+    });
     const currentUserId = req.user?.id;
+    const likedPosts = currentUserId
+      ? await prisma.like.findMany({
+          where: { userId: currentUserId, postId: { in: posts.map((post) => post.id) } },
+          select: { postId: true },
+        })
+      : [];
+    const likedPostIds = new Set(likedPosts.map((like) => like.postId));
 
-    const formattedPosts = await Promise.all(
-      posts.map(async (post) => {
-        let isLiked = false;
-
-        if (currentUserId) {
-          const existingLike = await prisma.like.findFirst({
-            where: {
-              postId: post.id,
-              userId: currentUserId,
-            },
-          });
-
-          isLiked = !!existingLike;
-        }
-
-        return {
+    const formattedPosts = posts.map((post) => ({
           id: post.id,
           title: post.title,
           content: post.content,
+          type: post.type,
           image: post.image,
           status: post.status,
           views: post.views,
@@ -77,10 +58,8 @@ const getPosts = async (req, res) => {
           author: post.user,
           commentCount: post._count.comments,
           likeCount: post._count.likes,
-          isLiked,
-        };
-      })
-    );
+          isLiked: likedPostIds.has(post.id),
+        }));
 
     return res.json(formattedPosts);
   } catch (error) {
@@ -159,7 +138,7 @@ const createPost = async (req, res) => {
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
-    const { title, content, categoryId } = req.body;
+    const { title, content, categoryId, type } = req.body;
 
     if (!title || !content || !categoryId) {
       return res.status(400).json({
@@ -198,6 +177,7 @@ const createPost = async (req, res) => {
         image: imagePath,
         categoryId: parsedCategoryId,
         userId: req.user.id,
+        type: ['DISCUSSION', 'QUESTION', 'TIP', 'EXPERIENCE', 'PROBLEM', 'IDEA', 'ANNOUNCEMENT'].includes(type) ? type : 'DISCUSSION',
       },
       include: {
         category: true,

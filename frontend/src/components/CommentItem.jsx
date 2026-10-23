@@ -111,7 +111,7 @@ export const CommentItem = ({ comment, postId, onCommentAdded }) => {
                 {comment.user.username}
               </span>
               <span className={`role-badge ${comment.user.role.toLowerCase()}`}>
-                {comment.user.role}
+                {comment.user.role === 'USER' ? 'CUSTOMER' : comment.user.role}
               </span>
             </div>
           </div>

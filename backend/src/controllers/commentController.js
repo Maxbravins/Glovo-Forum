@@ -6,7 +6,7 @@ const getCommentsByPostId = async (req, res) => {
     if (isNaN(postId)) return res.status(400).json({ message: 'Invalid post ID' });
 
     const comments = await prisma.comment.findMany({
-      where: { postId },
+      where: { postId, status: 'ACTIVE' },
       orderBy: { createdAt: 'asc' },
       include: {
         user: {
@@ -97,9 +97,11 @@ const createComment = async (req, res) => {
 
     const post = await prisma.post.findUnique({ where: { id: parsedPostId } });
     if (!post) return res.status(404).json({ message: 'Post not found' });
+    if (post.status !== 'ACTIVE') return res.status(404).json({ message: 'Post not found' });
+    if (post.locked) return res.status(403).json({ message: 'This discussion is locked' });
 
     if (parsedParentId) {
-      const parentComment = await prisma.comment.findUnique({ where: { id: parsedParentId } });
+      const parentComment = await prisma.comment.findFirst({ where: { id: parsedParentId, postId: parsedPostId, status: 'ACTIVE' } });
       if (!parentComment) return res.status(404).json({ message: 'Parent comment not found' });
     }
 

@@ -153,6 +153,7 @@ export const AdminDashboardPage = ({ onBack }) => {
                     >
                       <option value="USER">USER</option>
                       <option value="RIDER">RIDER</option>
+                      <option value="STORE">STORE</option>
                       <option value="ADMIN">ADMIN</option>
                     </select>
                   </td>

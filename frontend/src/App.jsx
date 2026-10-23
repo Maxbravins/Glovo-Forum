@@ -16,6 +16,7 @@ const AppContent = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [categories, setCategories] = useState([]);
+  const [refreshToken, setRefreshToken] = useState(0);
 
   useEffect(() => {
     fetchCategories().then(setCategories).catch(console.error);
@@ -52,6 +53,7 @@ const AppContent = () => {
         {currentView === 'home' && (
           <HomePage
             searchQuery={searchQuery}
+            refreshToken={refreshToken}
             onSelectPost={handleSelectPost}
             onOpenCreatePost={handleOpenCreateModal}
           />
@@ -90,9 +92,7 @@ const AppContent = () => {
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onPostCreated={() => {
-          if (currentView === 'home') {
-            setSearchQuery((prev) => prev);
-          }
+          setRefreshToken((value) => value + 1);
         }}
       />
     </div>

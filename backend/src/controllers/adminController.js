@@ -56,7 +56,7 @@ const updateUserRole = async (req, res) => {
     const id = parseInt(req.params.id);
     const { role } = req.body;
 
-    if (!['USER', 'RIDER', 'ADMIN'].includes(role)) {
+    if (!['USER', 'RIDER', 'STORE', 'ADMIN'].includes(role)) {
       return res.status(400).json({ message: 'Invalid role specified' });
     }
 

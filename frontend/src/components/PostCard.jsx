@@ -73,13 +73,19 @@ export const PostCard = ({ post, onClick }) => {
           </div>
 
           <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>{post.author.username}</span>
-          <span className={`role-badge ${post.author.role.toLowerCase()}`}>{post.author.role}</span>
+          <span className={`role-badge ${post.author.role.toLowerCase()}`}>{post.author.role === 'USER' ? 'CUSTOMER' : post.author.role}</span>
         </div>
       </div>
 
       <h3 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '8px', color: 'var(--text-main)', lineHeight: 1.3 }}>
         {post.title}
       </h3>
+
+      {post.type && post.type !== 'DISCUSSION' && (
+        <span style={{ display: 'inline-block', marginBottom: '8px', color: 'var(--color-brand-green)', fontSize: '0.75rem', fontWeight: 700 }}>
+          {post.type.replaceAll('_', ' ')}
+        </span>
+      )}
 
       <p style={{ color: 'var(--text-muted)', fontSize: '0.92rem', marginBottom: '12px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
         {post.content}

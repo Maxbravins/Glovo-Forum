@@ -16,6 +16,7 @@ export const HomePage = ({
   searchQuery,
   onSelectPost,
   onOpenCreatePost,
+  refreshToken,
 }) => {
   const [posts, setPosts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -43,7 +44,7 @@ export const HomePage = ({
 
   useEffect(() => {
     loadData();
-  }, [selectedCategory, searchQuery, sortBy]);
+  }, [selectedCategory, searchQuery, sortBy, refreshToken]);
 
   const activeCategory = categories.find(
     (category) => category.slug === selectedCategory
@@ -67,7 +68,7 @@ export const HomePage = ({
             </div>
 
             <h1 className="max-w-2xl text-3xl font-extrabold leading-tight tracking-tight text-white sm:text-4xl">
-              Rider & Customer{' '}
+              Customer, Rider & Store{' '}
               <span className="text-[#ffc244]">
                 Community Hub
               </span>

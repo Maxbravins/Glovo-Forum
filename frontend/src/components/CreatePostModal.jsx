@@ -11,6 +11,7 @@ export const CreatePostModal = ({
 }) => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [type, setType] = useState('DISCUSSION');
   const [categoryId, setCategoryId] = useState(categories[0]?.id || 1);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
@@ -43,6 +44,7 @@ export const CreatePostModal = ({
       formData.append('title', title.trim());
       formData.append('content', content.trim());
       formData.append('categoryId', categoryId.toString());
+      formData.append('type', type);
       if (selectedPhoto) {
         formData.append('photo', selectedPhoto);
       }
@@ -50,6 +52,7 @@ export const CreatePostModal = ({
       await createPostApi(formData);
       setTitle('');
       setContent('');
+      setType('DISCUSSION');
       setSelectedPhoto(null);
       setPreviewUrl(null);
       onPostCreated();
@@ -118,6 +121,20 @@ export const CreatePostModal = ({
               style={{ width: '100%' }}
               required
             />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, marginBottom: '6px', color: 'var(--text-muted)' }}>
+              Conversation type
+            </label>
+            <select value={type} onChange={(e) => setType(e.target.value)} style={{ width: '100%' }}>
+              <option value="DISCUSSION">Discussion</option>
+              <option value="QUESTION">Question</option>
+              <option value="TIP">Tip</option>
+              <option value="EXPERIENCE">Experience</option>
+              <option value="PROBLEM">Problem</option>
+              <option value="IDEA">Idea</option>
+            </select>
           </div>
 
           <div>

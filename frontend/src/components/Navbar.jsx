@@ -142,7 +142,7 @@ export const Navbar = ({
                           : 'bg-white/10 text-gray-400'
                     }`}
                   >
-                    {user.role}
+                    {user.role === 'USER' ? 'CUSTOMER' : user.role}
                   </span>
                 </div>
 
