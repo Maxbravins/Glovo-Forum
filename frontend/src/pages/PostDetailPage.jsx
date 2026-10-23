@@ -4,8 +4,10 @@ import { useAuth } from '../context/AuthContext';
 import { CommentItem } from '../components/CommentItem';
 import { PhotoUploader } from '../components/PhotoUploader';
 import { ArrowLeft, Heart, MessageSquare, Eye, Pin, User as UserIcon, Trash2, Send } from 'lucide-react';
+import { SharePostButton } from '../components/SharePostButton';
+import { FollowButton } from '../components/FollowButton';
 
-export const PostDetailPage = ({ postId, onBack }) => {
+export const PostDetailPage = ({ postId, onBack, onRequestLogin }) => {
   const { user } = useAuth();
   const [post, setPost] = useState(null);
   const [comments, setComments] = useState([]);
@@ -18,6 +20,7 @@ export const PostDetailPage = ({ postId, onBack }) => {
 
   const [likeCount, setLikeCount] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
+  const [isSensitiveRevealed, setIsSensitiveRevealed] = useState(false);
 
   const loadData = async () => {
     setIsLoading(true);
@@ -38,6 +41,7 @@ export const PostDetailPage = ({ postId, onBack }) => {
   };
 
   useEffect(() => {
+    setIsSensitiveRevealed(false);
     loadData();
   }, [postId]);
 
@@ -183,6 +187,7 @@ export const PostDetailPage = ({ postId, onBack }) => {
 
             <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>{post.author.username}</span>
             <span className={`role-badge ${post.author.role.toLowerCase()}`}>{post.author.role === 'USER' ? 'CUSTOMER' : post.author.role}</span>
+            <FollowButton userId={post.author.id} initialFollowing={post.isFollowing} onRequestLogin={onRequestLogin} />
           </div>
         </div>
 
@@ -194,11 +199,19 @@ export const PostDetailPage = ({ postId, onBack }) => {
           Posted on {formattedDate}
         </div>
 
-        <p style={{ fontSize: '1rem', color: 'var(--text-main)', whiteSpace: 'pre-line', marginBottom: '16px', lineHeight: 1.6 }}>
-          {post.content}
-        </p>
+        {post.sensitive && !isSensitiveRevealed ? (
+          <div role="note" style={{ margin: '16px 0', padding: 18, border: '1px solid rgba(255,194,68,.35)', borderRadius: 'var(--radius-md)', background: 'rgba(255,194,68,.08)' }}>
+            <strong style={{ display: 'block', marginBottom: 6 }}>Sensitive content</strong>
+            <p style={{ marginBottom: 12, color: 'var(--text-muted)', fontSize: '.9rem' }}>The author added a warning. Reveal the post text and image if you’re comfortable viewing them.</p>
+            <button type="button" className="btn btn-secondary btn-sm" onClick={() => setIsSensitiveRevealed(true)}>Reveal post</button>
+          </div>
+        ) : (
+          <p style={{ fontSize: '1rem', color: 'var(--text-main)', whiteSpace: 'pre-line', marginBottom: '16px', lineHeight: 1.6 }}>
+            {post.content}
+          </p>
+        )}
 
-        {post.image && (
+        {post.image && (!post.sensitive || isSensitiveRevealed) && (
           <img src={post.image} alt="Post Attachment" className="post-media-full" />
         )}
 
@@ -231,17 +244,20 @@ export const PostDetailPage = ({ postId, onBack }) => {
             </span>
           </div>
 
-          {(user?.id === post.author.id || user?.role === 'ADMIN') && (
-            <button
-              type="button"
-              onClick={handleDeletePost}
-              className="btn btn-secondary btn-sm"
-              style={{ color: 'var(--color-brand-red)' }}
-            >
-              <Trash2 size={16} />
-              <span>Delete Post</span>
-            </button>
-          )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <SharePostButton post={post} />
+            {(user?.id === post.author.id || user?.role === 'ADMIN') && (
+              <button
+                type="button"
+                onClick={handleDeletePost}
+                className="btn btn-secondary btn-sm"
+                style={{ color: 'var(--color-brand-red)' }}
+              >
+                <Trash2 size={16} />
+                <span>Delete Post</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -255,9 +271,10 @@ export const PostDetailPage = ({ postId, onBack }) => {
             <textarea
               value={commentContent}
               onChange={(e) => setCommentContent(e.target.value)}
-              placeholder="Join the discussion... (Attach photos if relevant)"
+              placeholder="Join the discussion... Use @username to mention someone."
               style={{ width: '100%', minHeight: '80px', marginBottom: '8px' }}
             />
+            <p style={{ marginTop: -4, marginBottom: 8, color: 'var(--text-dim)', fontSize: '.78rem' }}>Mention a member with @username to notify them.</p>
 
             <PhotoUploader
               selectedFile={selectedPhoto}

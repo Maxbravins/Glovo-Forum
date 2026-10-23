@@ -1,8 +1,9 @@
 const { prisma } = require('../config/db');
+const { notifyMentionedUsers } = require('../utils/mentionNotifications');
 
 const getPosts = async (req, res) => {
   try {
-    const { category, search, sort } = req.query;
+    const { category, search, sort, feed } = req.query;
 
     const where = {};
 
@@ -15,6 +16,21 @@ const getPosts = async (req, res) => {
         { title: { contains: String(search) } },
         { content: { contains: String(search) } },
       ];
+    }
+
+    const currentUserId = req.user?.id;
+    let followingUserIds = [];
+    if (currentUserId) {
+      const follows = await prisma.userFollow.findMany({
+        where: { followerId: currentUserId },
+        select: { followingId: true },
+      });
+      followingUserIds = follows.map((follow) => follow.followingId);
+    }
+
+    if (feed === 'following') {
+      if (!currentUserId) return res.status(401).json({ message: 'Log in to view posts from members you follow' });
+      where.userId = { in: followingUserIds };
     }
 
     let orderBy = [{ pinned: 'desc' }, { createdAt: 'desc' }];
@@ -32,7 +48,6 @@ const getPosts = async (req, res) => {
         _count: { select: { comments: true, likes: true, reactions: true } },
       },
     });
-    const currentUserId = req.user?.id;
     const likedPosts = currentUserId
       ? await prisma.like.findMany({
           where: { userId: currentUserId, postId: { in: posts.map((post) => post.id) } },
@@ -40,6 +55,7 @@ const getPosts = async (req, res) => {
         })
       : [];
     const likedPostIds = new Set(likedPosts.map((like) => like.postId));
+    const followedUserIds = new Set(followingUserIds);
 
     const formattedPosts = posts.map((post) => ({
           id: post.id,
@@ -47,6 +63,7 @@ const getPosts = async (req, res) => {
           content: post.content,
           type: post.type,
           image: post.image,
+          sensitive: post.sensitive,
           status: post.status,
           views: post.views,
           pinned: post.pinned,
@@ -59,6 +76,7 @@ const getPosts = async (req, res) => {
           commentCount: post._count.comments,
           likeCount: post._count.likes,
           isLiked: likedPostIds.has(post.id),
+          isFollowing: followedUserIds.has(post.userId),
         }));
 
     return res.json(formattedPosts);
@@ -103,6 +121,7 @@ const getPostById = async (req, res) => {
 
     const currentUserId = req.user?.id;
     let isLiked = false;
+    let isFollowing = false;
 
     if (currentUserId) {
       const existingLike = await prisma.like.findFirst({
@@ -113,6 +132,10 @@ const getPostById = async (req, res) => {
       });
 
       isLiked = !!existingLike;
+      isFollowing = !!(await prisma.userFollow.findUnique({
+        where: { followerId_followingId: { followerId: currentUserId, followingId: post.userId } },
+        select: { id: true },
+      }));
     }
 
     return res.json({
@@ -121,6 +144,7 @@ const getPostById = async (req, res) => {
       commentCount: post._count.comments,
       likeCount: post._count.likes,
       isLiked,
+      isFollowing,
     });
   } catch (error) {
     console.error('Error fetching post:', error);
@@ -139,6 +163,7 @@ const createPost = async (req, res) => {
     }
 
     const { title, content, categoryId, type } = req.body;
+    const isSensitive = req.body.sensitive === true || req.body.sensitive === 'true';
 
     if (!title || !content || !categoryId) {
       return res.status(400).json({
@@ -175,6 +200,7 @@ const createPost = async (req, res) => {
         title: title.trim(),
         content: content.trim(),
         image: imagePath,
+        sensitive: isSensitive,
         categoryId: parsedCategoryId,
         userId: req.user.id,
         type: ['DISCUSSION', 'QUESTION', 'TIP', 'EXPERIENCE', 'PROBLEM', 'IDEA', 'ANNOUNCEMENT'].includes(type) ? type : 'DISCUSSION',
@@ -191,6 +217,12 @@ const createPost = async (req, res) => {
         },
       },
     });
+
+    try {
+      await notifyMentionedUsers({ senderId: req.user.id, text: `${title} ${content}`, postId: post.id });
+    } catch (mentionError) {
+      console.error('Unable to notify mentioned users:', mentionError);
+    }
 
     return res.status(201).json({
       ...post,

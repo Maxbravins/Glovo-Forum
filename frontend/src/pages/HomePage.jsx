@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { fetchPosts, fetchCategories } from '../services/api';
 import { PostCard } from '../components/PostCard';
+import { CommunityPulse } from '../components/CommunityPulse';
+import { useAuth } from '../context/AuthContext';
 import {
   Flame,
   Clock3,
@@ -17,11 +19,13 @@ export const HomePage = ({
   onSelectPost,
   onOpenCreatePost,
   refreshToken,
+  onRequestLogin,
 }) => {
+  const { user } = useAuth();
   const [posts, setPosts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('');
-  const [sortBy, setSortBy] = useState('latest');
+  const [activeFeed, setActiveFeed] = useState('latest');
   const [isLoading, setIsLoading] = useState(true);
 
   const loadData = async () => {
@@ -30,7 +34,7 @@ export const HomePage = ({
     try {
       const [categoriesData, postsData] = await Promise.all([
         fetchCategories(),
-        fetchPosts(selectedCategory, searchQuery, sortBy),
+        fetchPosts(selectedCategory, searchQuery, activeFeed === 'popular' ? 'popular' : 'latest', activeFeed),
       ]);
 
       setCategories(categoriesData);
@@ -42,9 +46,19 @@ export const HomePage = ({
     }
   };
 
+  const handleFollowChange = (authorId, isFollowing) => {
+    setPosts((current) => current
+      .filter((post) => !(activeFeed === 'following' && post.author.id === authorId && !isFollowing))
+      .map((post) => post.author.id === authorId ? { ...post, isFollowing } : post));
+  };
+
   useEffect(() => {
+    if (!user && activeFeed === 'following') {
+      setActiveFeed('latest');
+      return;
+    }
     loadData();
-  }, [selectedCategory, searchQuery, sortBy, refreshToken]);
+  }, [selectedCategory, searchQuery, activeFeed, refreshToken, user?.id]);
 
   const activeCategory = categories.find(
     (category) => category.slug === selectedCategory
@@ -112,6 +126,8 @@ export const HomePage = ({
             </div>
           </div>
         </section>
+
+        <CommunityPulse onRequestLogin={onRequestLogin} />
 
         {/* CATEGORY NAVIGATION */}
         <section className="mb-8">
@@ -233,9 +249,9 @@ export const HomePage = ({
               <div className="flex rounded-xl border border-[#2e3440] bg-[#181b20] p-1">
                 <button
                   type="button"
-                  onClick={() => setSortBy('latest')}
+                  onClick={() => setActiveFeed('latest')}
                   className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${
-                    sortBy === 'latest'
+                    activeFeed === 'latest'
                       ? 'bg-[#ffc244] text-[#0f1115]'
                       : 'text-gray-400 hover:text-white'
                   }`}
@@ -246,9 +262,9 @@ export const HomePage = ({
 
                 <button
                   type="button"
-                  onClick={() => setSortBy('popular')}
+                  onClick={() => setActiveFeed('popular')}
                   className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${
-                    sortBy === 'popular'
+                    activeFeed === 'popular'
                       ? 'bg-[#ffc244] text-[#0f1115]'
                       : 'text-gray-400 hover:text-white'
                   }`}
@@ -256,6 +272,18 @@ export const HomePage = ({
                   <Flame size={14} />
                   Popular
                 </button>
+                {user && <button
+                  type="button"
+                  onClick={() => setActiveFeed('following')}
+                  className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${
+                    activeFeed === 'following'
+                      ? 'bg-[#ffc244] text-[#0f1115]'
+                      : 'text-gray-400 hover:text-white'
+                  }`}
+                >
+                  <Users size={14} />
+                  Following
+                </button>}
               </div>
             </div>
           </div>
@@ -280,21 +308,22 @@ export const HomePage = ({
                 </div>
 
                 <h3 className="text-lg font-extrabold text-white">
-                  No discussions found
+                  {activeFeed === 'following' ? 'Your Following feed is empty' : 'No discussions found'}
                 </h3>
 
                 <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-gray-400">
-                  There are no discussions matching your current filters.
-                  Start a new conversation and get the community involved.
+                  {activeFeed === 'following'
+                    ? 'Follow riders, stores, or community members from their posts to see their updates here.'
+                    : 'There are no discussions matching your current filters. Start a new conversation and get the community involved.'}
                 </p>
 
                 <button
                   type="button"
-                  onClick={onOpenCreatePost}
+                  onClick={activeFeed === 'following' ? () => setActiveFeed('latest') : onOpenCreatePost}
                   className="mt-5 inline-flex items-center justify-center gap-2 rounded-xl bg-[#ffc244] px-4 py-2.5 text-sm font-bold text-[#0f1115] transition-all hover:-translate-y-0.5 hover:bg-[#eab233]"
                 >
-                  <Plus size={16} />
-                  Start a discussion
+                  {activeFeed === 'following' ? <Clock3 size={16} /> : <Plus size={16} />}
+                  {activeFeed === 'following' ? 'Browse latest posts' : 'Start a discussion'}
                 </button>
               </div>
             ) : (
@@ -303,6 +332,8 @@ export const HomePage = ({
                   key={post.id}
                   post={post}
                   onClick={() => onSelectPost(post.id)}
+                  onFollowChange={handleFollowChange}
+                  onRequestLogin={onRequestLogin}
                 />
               ))
             )}

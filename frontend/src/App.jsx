@@ -19,6 +19,22 @@ const AppContent = () => {
   const [refreshToken, setRefreshToken] = useState(0);
 
   useEffect(() => {
+    const syncPostFromUrl = () => {
+      const postId = new URLSearchParams(window.location.search).get('post');
+      if (postId && /^\d+$/.test(postId)) {
+        setSelectedPostId(Number(postId));
+        setCurrentView('post-detail');
+      } else if (currentView === 'post-detail') {
+        setCurrentView('home');
+        setSelectedPostId(null);
+      }
+    };
+    syncPostFromUrl();
+    window.addEventListener('popstate', syncPostFromUrl);
+    return () => window.removeEventListener('popstate', syncPostFromUrl);
+  }, [currentView]);
+
+  useEffect(() => {
     fetchCategories().then(setCategories).catch(console.error);
   }, []);
 
@@ -33,6 +49,18 @@ const AppContent = () => {
   const handleSelectPost = (postId) => {
     setSelectedPostId(postId);
     setCurrentView('post-detail');
+    const url = new URL(window.location.href);
+    url.search = '';
+    url.searchParams.set('post', postId);
+    window.history.pushState({}, '', url);
+  };
+
+  const handleBackToHome = () => {
+    setCurrentView('home');
+    setSelectedPostId(null);
+    const url = new URL(window.location.href);
+    url.searchParams.delete('post');
+    window.history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
   };
 
   return (
@@ -40,12 +68,13 @@ const AppContent = () => {
       <Navbar
         onSearch={(q) => {
           setSearchQuery(q);
-          if (currentView !== 'home') setCurrentView('home');
+          if (currentView !== 'home') handleBackToHome();
         }}
         onOpenCreateModal={handleOpenCreateModal}
-        onNavigateHome={() => setCurrentView('home')}
-        onNavigateAdmin={() => setCurrentView('admin')}
-        onNavigateAuth={(type) => setCurrentView(type)}
+        onNavigateHome={handleBackToHome}
+        onNavigateAdmin={() => { handleBackToHome(); setCurrentView('admin'); }}
+        onNavigateAuth={(type) => { handleBackToHome(); setCurrentView(type); }}
+        onSelectPost={handleSelectPost}
         currentView={currentView}
       />
 
@@ -56,13 +85,15 @@ const AppContent = () => {
             refreshToken={refreshToken}
             onSelectPost={handleSelectPost}
             onOpenCreatePost={handleOpenCreateModal}
+            onRequestLogin={() => setCurrentView('login')}
           />
         )}
 
         {currentView === 'post-detail' && selectedPostId && (
           <PostDetailPage
             postId={selectedPostId}
-            onBack={() => setCurrentView('home')}
+            onBack={handleBackToHome}
+            onRequestLogin={() => setCurrentView('login')}
           />
         )}
 

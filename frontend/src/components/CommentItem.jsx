@@ -3,6 +3,7 @@ import { createCommentApi, toggleLikeApi, deleteCommentApi } from '../services/a
 import { useAuth } from '../context/AuthContext';
 import { PhotoUploader } from './PhotoUploader';
 import { Heart, Reply, Trash2, User as UserIcon, CornerDownRight } from 'lucide-react';
+import { ReportButton } from './ReportButton';
 
 export const CommentItem = ({ comment, postId, onCommentAdded }) => {
   const { user } = useAuth();
@@ -175,6 +176,8 @@ export const CommentItem = ({ comment, postId, onCommentAdded }) => {
             </button>
           )}
 
+          <ReportButton commentId={comment.id} />
+
           {(user?.id === comment.userId || user?.role === 'ADMIN') && (
             <button
               type="button"
@@ -204,7 +207,7 @@ export const CommentItem = ({ comment, postId, onCommentAdded }) => {
             <textarea
               value={replyText}
               onChange={(e) => setReplyText(e.target.value)}
-              placeholder="Write your reply..."
+              placeholder="Write your reply... Use @username to mention someone."
               style={{ width: '100%', minHeight: '60px' }}
             />
 

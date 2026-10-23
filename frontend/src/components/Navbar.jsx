@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import {
   Search,
@@ -7,7 +7,9 @@ import {
   User as UserIcon,
   ShieldAlert,
   Bike,
+  Bell,
 } from 'lucide-react';
+import { fetchNotificationsApi, markNotificationReadApi } from '../services/api';
 
 export const Navbar = ({
   onSearch,
@@ -15,10 +17,46 @@ export const Navbar = ({
   onNavigateHome,
   onNavigateAdmin,
   onNavigateAuth,
+  onSelectPost,
   currentView,
 }) => {
   const { user, logout } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
+  const [notifications, setNotifications] = useState([]);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+
+  useEffect(() => {
+    if (!user) {
+      setNotifications([]);
+      return;
+    }
+    fetchNotificationsApi().then(setNotifications).catch(() => {});
+  }, [user?.id]);
+
+  const openNotifications = async () => {
+    const nextOpen = !notificationsOpen;
+    setNotificationsOpen(nextOpen);
+    if (nextOpen) {
+      try { setNotifications(await fetchNotificationsApi()); } catch (error) { console.error('Failed to load notifications', error); }
+    }
+  };
+
+  const handleNotificationClick = async (notification) => {
+    if (!notification.read) {
+      try {
+        await markNotificationReadApi(notification.id);
+        setNotifications((items) => items.map((item) => item.id === notification.id ? { ...item, read: true } : item));
+      } catch (error) {
+        console.error('Failed to mark notification as read', error);
+      }
+    }
+    setNotificationsOpen(false);
+    if (notification.postId) onSelectPost?.(notification.postId);
+    else if (notification.pulseUpdateId) {
+      onNavigateHome?.();
+      window.setTimeout(() => document.getElementById('community-pulse')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0);
+    }
+  };
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
@@ -77,6 +115,30 @@ export const Navbar = ({
         <div className="ml-auto flex shrink-0 items-center gap-2">
           {user ? (
             <>
+              <div className="relative">
+                <button type="button" onClick={openNotifications} aria-label="Notifications" aria-expanded={notificationsOpen} className="relative inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#2e3440] bg-[#2d3340] text-gray-100 hover:bg-[#20242b]">
+                  <Bell size={18} />
+                  {notifications.some((notification) => !notification.read) && <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full border-2 border-[#181b20] bg-[#ff5a5f]" />}
+                </button>
+                {notificationsOpen && (
+                  <div className="absolute right-0 top-12 z-[60] w-[min(90vw,360px)] overflow-hidden rounded-xl border border-[#343b47] bg-[#20242b] shadow-2xl">
+                    <div className="border-b border-[#343b47] px-4 py-3 font-bold text-white">Notifications</div>
+                    {notifications.length === 0 ? (
+                      <p className="px-4 py-5 text-sm text-gray-400">You’re all caught up.</p>
+                    ) : (
+                      <div className="max-h-[360px] overflow-y-auto">
+                        {notifications.map((notification) => (
+                          <button key={notification.id} type="button" onClick={() => handleNotificationClick(notification)} className={`block w-full border-b border-white/5 px-4 py-3 text-left hover:bg-white/5 ${notification.read ? 'opacity-70' : ''}`}>
+                            <span className="block text-sm font-semibold text-white">{notification.title}</span>
+                            <span className="mt-1 block text-xs text-gray-400">{notification.sender?.username ? `@${notification.sender.username} ` : ''}{notification.message}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
               {/* New Post */}
               <button
                 type="button"

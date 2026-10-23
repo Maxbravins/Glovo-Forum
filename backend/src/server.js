@@ -12,6 +12,9 @@ const adminRoutes = require('./routes/adminRoutes');
 const reactionRoutes = require("./routes/reactionRoutes");
 const followRoutes = require("./routes/followRoutes");
 const answerRoutes = require("./routes/answerRoutes");
+const reportRoutes = require('./routes/reportRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
+const pulseRoutes = require('./routes/pulseRoutes');
 
 
 dotenv.config();
@@ -38,6 +41,9 @@ app.use('/api/admin', adminRoutes);
 app.use("/api/reactions", reactionRoutes);
 app.use("/api/follows", followRoutes);
 app.use("/api/answers", answerRoutes);
+app.use('/api/reports', reportRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/pulse', pulseRoutes);
 
 
 app.get('/api/health', (req, res) => {

@@ -1,30 +1,44 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldAlert, Users, MessageSquare, FileText, Bike, Trash2, ArrowLeft } from 'lucide-react';
+import { ShieldAlert, Users, MessageSquare, FileText, Bike, Trash2, ArrowLeft, Flag } from 'lucide-react';
 import {
   fetchAdminStats,
   fetchUsers,
   deleteUserApi,
   updateUserRoleApi,
+  fetchPendingReports,
+  updateReportStatusApi,
 } from '../services/api';
 
 export const AdminDashboardPage = ({ onBack }) => {
   const [stats, setStats] = useState(null);
   const [users, setUsers] = useState([]);
+  const [reports, setReports] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [statsData, usersData] = await Promise.all([
+      const [statsData, usersData, reportsData] = await Promise.all([
         fetchAdminStats(),
         fetchUsers(),
+        fetchPendingReports(),
       ]);
       setStats(statsData);
       setUsers(usersData);
+      setReports(reportsData);
     } catch (err) {
       console.error('Failed to load admin dashboard data', err);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleReportStatus = async (id, status) => {
+    try {
+      await updateReportStatusApi(id, status);
+      setReports((current) => current.filter((report) => report.id !== id));
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to update report');
     }
   };
 
@@ -122,6 +136,44 @@ export const AdminDashboardPage = ({ onBack }) => {
           </div>
         </div>
       )}
+
+      <section className="card" style={{ padding: '24px', marginBottom: 24 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 16 }}>
+          <Flag size={20} style={{ color: 'var(--color-brand-red)' }} />
+          <h3 style={{ fontSize: '1.1rem', fontWeight: 800 }}>Pending reports ({reports.length})</h3>
+        </div>
+        {reports.length === 0 ? (
+          <p style={{ color: 'var(--text-muted)', fontSize: '.9rem' }}>No content reports need review.</p>
+        ) : (
+          <div style={{ display: 'grid', gap: 12 }}>
+            {reports.map((report) => {
+              const target = report.post
+                ? { label: 'Post', title: report.post.title, body: report.post.content, author: report.post.user?.username }
+                : report.comment
+                  ? { label: 'Comment', title: `Comment on ${report.comment?.post?.title || 'a post'}`, body: report.comment?.content, author: report.comment?.user?.username }
+                  : { label: 'Community Pulse', title: `${report.pulseUpdate?.type || 'Update'} · ${report.pulseUpdate?.area || 'Area'}`, body: report.pulseUpdate?.content, author: report.pulseUpdate?.user?.username };
+              return (
+                <article key={report.id} style={{ border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: 14 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+                    <div>
+                      <strong>{target.label}: {target.title}</strong>
+                      <p style={{ margin: '6px 0', color: 'var(--text-muted)', whiteSpace: 'pre-line' }}>{target.body}</p>
+                      <span style={{ color: 'var(--text-dim)', fontSize: '.8rem' }}>
+                        Reported by {report.user?.username} · {report.reason.replaceAll('_', ' ')} · Content by {target.author || 'unknown'}
+                      </span>
+                      {report.description && <p style={{ marginTop: 8, fontSize: '.88rem' }}>Reporter context: {report.description}</p>}
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <button type="button" className="btn btn-secondary btn-sm" onClick={() => handleReportStatus(report.id, 'DISMISSED')}>Dismiss</button>
+                      <button type="button" className="btn btn-primary btn-sm" onClick={() => handleReportStatus(report.id, 'RESOLVED')}>Resolve</button>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
+      </section>
 
       <div className="card" style={{ padding: '24px' }}>
         <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '16px' }}>Registered Members ({users.length})</h3>

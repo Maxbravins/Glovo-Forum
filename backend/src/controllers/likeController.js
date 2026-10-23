@@ -1,4 +1,5 @@
 const { prisma } = require('../config/db');
+const { notifyUser } = require('../utils/activityNotifications');
 
 const toggleLike = async (req, res) => {
   try {
@@ -24,8 +25,17 @@ const toggleLike = async (req, res) => {
         const count = await prisma.like.count({ where: { postId: parsedPostId } });
         return res.json({ liked: false, likeCount: count });
       } else {
+        const post = await prisma.post.findUnique({ where: { id: parsedPostId }, select: { userId: true, title: true } });
         await prisma.like.create({
           data: { userId, postId: parsedPostId },
+        });
+        await notifyUser({
+          recipientId: post?.userId,
+          senderId: userId,
+          type: 'LIKE',
+          title: 'Someone liked your post',
+          message: `A community member liked your post${post?.title ? `: ${post.title}` : ''}.`,
+          postId: parsedPostId,
         });
         const count = await prisma.like.count({ where: { postId: parsedPostId } });
         return res.json({ liked: true, likeCount: count });
@@ -42,8 +52,18 @@ const toggleLike = async (req, res) => {
         const count = await prisma.like.count({ where: { commentId: parsedCommentId } });
         return res.json({ liked: false, likeCount: count });
       } else {
+        const comment = await prisma.comment.findUnique({ where: { id: parsedCommentId }, select: { userId: true, postId: true } });
         await prisma.like.create({
           data: { userId, commentId: parsedCommentId },
+        });
+        await notifyUser({
+          recipientId: comment?.userId,
+          senderId: userId,
+          type: 'LIKE',
+          title: 'Someone liked your comment',
+          message: 'A community member liked your comment.',
+          postId: comment?.postId,
+          commentId: parsedCommentId,
         });
         const count = await prisma.like.count({ where: { commentId: parsedCommentId } });
         return res.json({ liked: true, likeCount: count });

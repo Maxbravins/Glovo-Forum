@@ -12,6 +12,7 @@ export const CreatePostModal = ({
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [type, setType] = useState('DISCUSSION');
+  const [isSensitive, setIsSensitive] = useState(false);
   const [categoryId, setCategoryId] = useState(categories[0]?.id || 1);
   const [selectedPhoto, setSelectedPhoto] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
@@ -45,6 +46,7 @@ export const CreatePostModal = ({
       formData.append('content', content.trim());
       formData.append('categoryId', categoryId.toString());
       formData.append('type', type);
+      formData.append('sensitive', String(isSensitive));
       if (selectedPhoto) {
         formData.append('photo', selectedPhoto);
       }
@@ -53,6 +55,7 @@ export const CreatePostModal = ({
       setTitle('');
       setContent('');
       setType('DISCUSSION');
+      setIsSensitive(false);
       setSelectedPhoto(null);
       setPreviewUrl(null);
       onPostCreated();
@@ -161,10 +164,11 @@ export const CreatePostModal = ({
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="Share full details, experiences, or questions..."
+              placeholder="Share full details, experiences, or questions... Use @username to mention someone."
               style={{ width: '100%', minHeight: '120px' }}
               required
             />
+            <p style={{ marginTop: 4, color: 'var(--text-dim)', fontSize: '.78rem' }}>Mention a member with @username to notify them.</p>
           </div>
 
           <div>
@@ -177,6 +181,14 @@ export const CreatePostModal = ({
               previewUrl={previewUrl}
             />
           </div>
+
+          <label style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '12px', borderRadius: 'var(--radius-md)', background: 'rgba(255, 194, 68, 0.08)', cursor: 'pointer' }}>
+            <input type="checkbox" checked={isSensitive} onChange={(event) => setIsSensitive(event.target.checked)} style={{ marginTop: 3 }} />
+            <span>
+              <strong style={{ display: 'block', fontSize: '.88rem' }}>Add a sensitive content warning</strong>
+              <span style={{ display: 'block', marginTop: 3, color: 'var(--text-muted)', fontSize: '.8rem' }}>Readers will need to reveal the post text and image before viewing them.</span>
+            </span>
+          </label>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
             <button type="button" onClick={onClose} className="btn btn-secondary">

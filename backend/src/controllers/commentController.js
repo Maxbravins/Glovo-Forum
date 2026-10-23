@@ -1,4 +1,6 @@
 const { prisma } = require('../config/db');
+const { notifyMentionedUsers } = require('../utils/mentionNotifications');
+const { notifyCommentActivity } = require('../utils/activityNotifications');
 
 const getCommentsByPostId = async (req, res) => {
   try {
@@ -100,8 +102,9 @@ const createComment = async (req, res) => {
     if (post.status !== 'ACTIVE') return res.status(404).json({ message: 'Post not found' });
     if (post.locked) return res.status(403).json({ message: 'This discussion is locked' });
 
+    let parentComment = null;
     if (parsedParentId) {
-      const parentComment = await prisma.comment.findFirst({ where: { id: parsedParentId, postId: parsedPostId, status: 'ACTIVE' } });
+      parentComment = await prisma.comment.findFirst({ where: { id: parsedParentId, postId: parsedPostId, status: 'ACTIVE' } });
       if (!parentComment) return res.status(404).json({ message: 'Parent comment not found' });
     }
 
@@ -118,6 +121,19 @@ const createComment = async (req, res) => {
           select: { id: true, username: true, role: true, avatar: true },
         },
       },
+    });
+
+    try {
+      await notifyMentionedUsers({ senderId: req.user.id, text: content, postId: parsedPostId, commentId: comment.id });
+    } catch (mentionError) {
+      console.error('Unable to notify mentioned users:', mentionError);
+    }
+    await notifyCommentActivity({
+      senderId: req.user.id,
+      postId: parsedPostId,
+      commentId: comment.id,
+      postAuthorId: post.userId,
+      parentCommentAuthorId: parentComment?.userId,
     });
 
     return res.status(201).json({

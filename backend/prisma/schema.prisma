@@ -43,6 +43,9 @@ model User {
   followers   UserFollow[] @relation("UserFollowers")
 
   reports     Report[]
+  pulseUpdates PulseUpdate[]
+  pulseConfirmations PulseConfirmation[]
+  savedPulseAreas SavedPulseArea[]
 
   badges      UserBadge[]
 
@@ -80,6 +83,7 @@ model Post {
   content String
 
   image String?
+  sensitive Boolean @default(false)
 
   // DISCUSSION, QUESTION, TIP, EXPERIENCE, PROBLEM, IDEA, ANNOUNCEMENT
   type String @default("DISCUSSION")
@@ -106,12 +110,7 @@ model Post {
 
   comments Comment[]
 
-  acceptedAnswer Comment? @relation(
-    "AcceptedAnswer",
-    fields: [acceptedAnswerId],
-    references: [id],
-    onDelete: SetNull
-  )
+  acceptedAnswer Comment? @relation("AcceptedAnswer", fields: [acceptedAnswerId], references: [id], onDelete: SetNull)
 
   likes       Like[]
   reactions   Reaction[]
@@ -272,19 +271,9 @@ model UserFollow {
 
   createdAt DateTime @default(now())
 
-  follower User @relation(
-    "UserFollowing",
-    fields: [followerId],
-    references: [id],
-    onDelete: Cascade
-  )
+  follower User @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
 
-  following User @relation(
-    "UserFollowers",
-    fields: [followingId],
-    references: [id],
-    onDelete: Cascade
-  )
+  following User @relation("UserFollowers", fields: [followingId], references: [id], onDelete: Cascade)
 
   @@unique([followerId, followingId])
   @@index([followingId])
@@ -304,6 +293,7 @@ model Report {
   userId    Int
   postId    Int?
   commentId Int?
+  pulseUpdateId Int?
 
   reviewedBy Int?
   reviewedAt DateTime?
@@ -314,10 +304,12 @@ model Report {
   user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   post    Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
   comment Comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  pulseUpdate PulseUpdate? @relation(fields: [pulseUpdateId], references: [id], onDelete: Cascade)
 
   @@index([status])
   @@index([postId])
   @@index([commentId])
+  @@index([pulseUpdateId])
   @@index([createdAt])
 }
 
@@ -337,26 +329,19 @@ model Notification {
 
   postId    Int?
   commentId Int?
+  pulseUpdateId Int?
 
   createdAt DateTime @default(now())
 
-  recipient User @relation(
-    "NotificationRecipient",
-    fields: [recipientId],
-    references: [id],
-    onDelete: Cascade
-  )
+  recipient User @relation("NotificationRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
 
-  sender User? @relation(
-    "NotificationSender",
-    fields: [senderId],
-    references: [id],
-    onDelete: SetNull
-  )
+  sender User? @relation("NotificationSender", fields: [senderId], references: [id], onDelete: SetNull)
+  pulseUpdate PulseUpdate? @relation(fields: [pulseUpdateId], references: [id], onDelete: Cascade)
 
   @@index([recipientId])
   @@index([read])
   @@index([createdAt])
+  @@index([pulseUpdateId])
 }
 
 model Mention {
@@ -370,19 +355,9 @@ model Mention {
 
   createdAt DateTime @default(now())
 
-  sender User @relation(
-    "MentionSender",
-    fields: [senderId],
-    references: [id],
-    onDelete: Cascade
-  )
+  sender User @relation("MentionSender", fields: [senderId], references: [id], onDelete: Cascade)
 
-  recipient User @relation(
-    "MentionRecipient",
-    fields: [recipientId],
-    references: [id],
-    onDelete: Cascade
-  )
+  recipient User @relation("MentionRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
 
   post Post? @relation(fields: [postId], references: [id], onDelete: Cascade)
 
@@ -453,14 +428,57 @@ model ModerationAction {
 
   createdAt DateTime @default(now())
 
-  moderator User @relation(
-    "ModeratorActions",
-    fields: [moderatorId],
-    references: [id],
-    onDelete: Cascade
-  )
+  moderator User @relation("ModeratorActions", fields: [moderatorId], references: [id], onDelete: Cascade)
 
   @@index([moderatorId])
   @@index([targetUserId])
   @@index([createdAt])
+}
+
+model PulseUpdate {
+  id        Int      @id @default(autoincrement())
+  type      String
+  area      String
+  areaKey   String   @default("")
+  content   String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    Int
+
+  user          User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  confirmations PulseConfirmation[]
+  reports       Report[]
+  notifications Notification[]
+
+  @@index([expiresAt])
+  @@index([createdAt])
+  @@index([area])
+  @@index([type])
+}
+
+model SavedPulseArea {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  area      String
+  areaKey   String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, areaKey])
+  @@index([areaKey])
+}
+
+model PulseConfirmation {
+  id            Int      @id @default(autoincrement())
+  pulseUpdateId Int
+  userId        Int
+  createdAt     DateTime @default(now())
+
+  pulseUpdate PulseUpdate @relation(fields: [pulseUpdateId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, pulseUpdateId])
+  @@index([pulseUpdateId])
 }

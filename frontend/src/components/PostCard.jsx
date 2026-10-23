@@ -2,11 +2,15 @@ import React, { useState } from 'react';
 import { toggleLikeApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { Eye, MessageSquare, Heart, Pin, User as UserIcon } from 'lucide-react';
+import { ReportButton } from './ReportButton';
+import { SharePostButton } from './SharePostButton';
+import { FollowButton } from './FollowButton';
 
-export const PostCard = ({ post, onClick }) => {
+export const PostCard = ({ post, onClick, onFollowChange, onRequestLogin }) => {
   const { user } = useAuth();
   const [likeCount, setLikeCount] = useState(post.likeCount);
   const [isLiked, setIsLiked] = useState(post.isLiked || false);
+  const [isSensitiveRevealed, setIsSensitiveRevealed] = useState(false);
 
   const handleLike = async (e) => {
     e.stopPropagation();
@@ -74,6 +78,12 @@ export const PostCard = ({ post, onClick }) => {
 
           <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>{post.author.username}</span>
           <span className={`role-badge ${post.author.role.toLowerCase()}`}>{post.author.role === 'USER' ? 'CUSTOMER' : post.author.role}</span>
+          <FollowButton
+            userId={post.author.id}
+            initialFollowing={post.isFollowing}
+            onFollowChange={onFollowChange}
+            onRequestLogin={onRequestLogin}
+          />
         </div>
       </div>
 
@@ -87,11 +97,19 @@ export const PostCard = ({ post, onClick }) => {
         </span>
       )}
 
-      <p style={{ color: 'var(--text-muted)', fontSize: '0.92rem', marginBottom: '12px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-        {post.content}
-      </p>
+      {post.sensitive && !isSensitiveRevealed ? (
+        <div style={{ marginBottom: 12, padding: '14px', border: '1px solid rgba(255,194,68,.3)', borderRadius: 'var(--radius-md)', background: 'rgba(255,194,68,.08)' }}>
+          <strong style={{ display: 'block', marginBottom: 5, fontSize: '.88rem' }}>Sensitive content</strong>
+          <span style={{ display: 'block', marginBottom: 10, color: 'var(--text-muted)', fontSize: '.82rem' }}>The author marked this post as sensitive.</span>
+          <button type="button" className="btn btn-secondary btn-sm" onClick={(event) => { event.stopPropagation(); setIsSensitiveRevealed(true); }}>Reveal post</button>
+        </div>
+      ) : (
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.92rem', marginBottom: '12px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+          {post.content}
+        </p>
+      )}
 
-      {post.image && (
+      {post.image && (!post.sensitive || isSensitiveRevealed) && (
         <div style={{ marginBottom: '12px', borderRadius: 'var(--radius-md)', overflow: 'hidden', maxHeight: '220px', border: '1px solid var(--border-color)' }}>
           <img src={post.image} alt="Post attachment" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         </div>
@@ -129,6 +147,10 @@ export const PostCard = ({ post, onClick }) => {
         <span style={{ fontSize: '0.78rem', color: 'var(--text-dim)' }}>
           {formattedDate}
         </span>
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 10 }}>
+        <SharePostButton post={post} stopPropagation />
+        <ReportButton postId={post.id} stopPropagation />
       </div>
     </div>
   );
